@@ -313,7 +313,7 @@ Broker generates an appropriate HTTP error response.
 
 14. The Client Broker deletes its session state.
 
-# Security Considerations
+# Security Considerations {#security}
 
 Although OTrP is protected end-to-end inside of HTTP, there is still value
 in using HTTPS for transport, since HTTPS can provides stronger protections
@@ -322,8 +322,48 @@ implementations MUST support HTTPS.  The choice of HTTP vs HTTPS at runtime
 is up to policy, where an administrator configures the TAM URI to be used,
 but it is expected that real deployments always use HTTPS.
 
-#  IANA Considerations
+# IANA Considerations
 
 This document requests that IANA assign the "application/otrp+json" media type.
+
+Type name: application
+
+Subtype name: otrp+json
+
+Required parameters: none
+
+Optional parameters: none
+
+Encoding considerations: Same as encoding considerations of
+application/json as specified in Section 11 of {{!RFC7159}}.
+
+Security considerations: See Section 12 of {{RFC7159}} and {{security}} of this document.
+
+Interoperability considerations: Same as interoperability
+considerations of application/json as specified in {{RFC7159}}.
+
+Published specification: This specification.
+
+Applications that use this media type: OTrP implementations.
+
+Fragment identifier considerations: N/A
+
+~~~~
+Additional information:
+    Deprecated alias names for this type: N/A
+    Magic number(s): N/A
+    File extension(s): N/A
+    Macintosh file type code(s): N/A
+~~~~
+
+Person & email address to contact for further information: teep@ietf.org
+
+Intended usage: COMMON
+
+Restrictions on usage: none
+
+Author: See the "Authors' Addresses" section of this document.
+
+Change controller: IETF
 
 --- back
