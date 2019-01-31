@@ -96,6 +96,26 @@ In an OCALL-based architecture, this might be implemented by not making
 any such call.  In a return-based architecture, this might be implemented
 by returning 0 bytes.
 
+# Use of HTTP as a Transport
+
+When not called out explicitly in this document, all implementation recommendations
+in {{?I-D.ietf-httpbis-bcp56bis}} apply to use of HTTP by OTrP.  
+
+Redirects MAY be automatically followed, and no request headers need be modified or
+removed upon a following such a redirect.
+
+Content is not intended to be treated as active by browsers and so HTTP responses
+with content SHOULD have the following headers as explained in Section 4.12 of
+{{I-D.ietf-httpbis-bcp56bis}}:
+
+~~~~
+Content-Type: application/otrp+json
+X-Content-Type-Options: nosniff
+Content-Security-Policy: default-src 'none'
+Cache-Control: max-age=3600
+Referrer-Policy: no-referrer
+~~~~
+
 # Client Broker Behavior
 
 ## Receiving a request to install a new Trusted Application
@@ -133,7 +153,7 @@ application installer) of success.
 
 If the OTrP Agent passes back a TAM URI with no message buffer, the TEEP Broker
 attempts to create session state,
-then sends an HTTP(S) GET to the TAM URI with an "Accept: application/json" header
+then sends an HTTP(S) GET to the TAM URI with an "Accept: application/otrp+json" header
  and an empty body. The HTTP request is then associated with the Broker's session state.
 
 If the OTrP Agent instead passes back a TAM URI with a message buffer, the TEEP Broker
@@ -152,8 +172,8 @@ When a message buffer (and TAM URI) is passed to a Broker from an OTrP Agent, th
 Broker MUST do the following, using the Broker's session state associated
 with its API call to the OTrP Agent.
 
-The Broker sends an HTTP POST request to the TAM URI with "Accept: application/json"
-and "Content-type: application/json" headers, and a body
+The Broker sends an HTTP POST request to the TAM URI with "Accept: application/otrp+json"
+and "Content-type: application/otrp+json" headers, and a body
 containing the OTrP message buffer provided by the OTrP Agent.
 The HTTP request is then associated with the Broker's session state.
 
@@ -226,13 +246,13 @@ then pass back a (possibly empty) message buffer.
 
 ## Getting an empty buffer back from the TAM
 
-If the TAM passes back an empty buffer, the Broker sends a 200 OK response 
-with no body.
+If the TAM passes back an empty buffer, the Broker sends a successful
+(2xx) response with no body.
 
 ## Getting a message buffer from the TAM
 
 If the TAM passes back a non-empty buffer, the Broker
-generates a 200 OK response with a "Content-type: application/json"
+generates a successful (2xx) response with a "Content-type: application/otrp+json"
 header, and with the message buffer as the body.
 
 ## Error handling
@@ -259,7 +279,7 @@ Broker generates an appropriate HTTP error response.
    it could skip to step 9 instead and generate a GetDeviceStateResponse.)
 
 4. The Client Broker sends an HTTP GET request to the TAM URI,
-   with an "Accept: application/json" header.
+   with an "Accept: application/otrp+json" header.
 
 5. The Server Broker receives the HTTP GET request, and calls
    the TAM's "ProcessConnect" API.
@@ -268,7 +288,7 @@ Broker generates an appropriate HTTP error response.
    is the first message) and passes it to the Server Broker.
 
 7. The Server Broker sends an HTTP 200 OK response with a
-   "Content-type: application/json" header, and the OTrP message
+   "Content-type: application/otrp+json" header, and the OTrP message
    in the body.
 
 8. The Client Broker gets the HTTP response, extracts the OTrP
@@ -280,7 +300,7 @@ Broker generates an appropriate HTTP error response.
 
 10. The Client Broker gets the OTrP message buffer and sends
     an HTTP POST request to the TAM URI, with
-    "Content-type: application/json" and "Accept: application/json".
+    "Content-type: application/otrp+json" and "Accept: application/otrp+json".
 
 11. The Server Broker receives the HTTP POST request, and calls
     the TAM's "ProcessOTrPMessage" API.
@@ -297,13 +317,13 @@ Broker generates an appropriate HTTP error response.
 
 Although OTrP is protected end-to-end inside of HTTP, there is still value
 in using HTTPS for transport, since HTTPS can provides stronger protections
-as discussed in Section 6 of {{?I-D.ietf-httpbis-bcp56bis}}.  As such, Broker
+as discussed in Section 6 of {{I-D.ietf-httpbis-bcp56bis}}.  As such, Broker
 implementations MUST support HTTPS.  The choice of HTTP vs HTTPS at runtime
 is up to policy, where an administrator configures the TAM URI to be used,
 but it is expected that real deployments always use HTTPS.
 
 #  IANA Considerations
 
-This document does not require actions by IANA.
+This document requests that IANA assign the "application/otrp+json" media type.
 
 --- back
