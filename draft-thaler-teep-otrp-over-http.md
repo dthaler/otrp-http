@@ -33,7 +33,7 @@ author:
 This document specifies the HTTP transport for the Open Trust Protocol (OTrP),
 which is used to manage code and configuration data in a Trusted Execution
 Environment (TEE).  An implementation of this document can run outside of any TEE,
-but interacts with an implementation of OTrP that runs inside a TEE.
+but interacts with an OTrP implementation that runs inside a TEE.
 
 --- middle
 
@@ -42,7 +42,7 @@ but interacts with an implementation of OTrP that runs inside a TEE.
 
 Trusted Execution Environments (TEEs), including Intel SGX, ARM TrustZone,
 Secure Elements, and others, enforce that only authorized code can execute within the TEE,
-and any memory used by such code can be protected against tampering or
+and any memory used by such code is protected against tampering or
 disclosure outside the TEE.  The Open Trust Protocol (OTrP) is designed to
 provision authorized code and configuration into TEEs.
 
@@ -50,7 +50,7 @@ To be secure against malware, an OTrP implementation (referred to as an
 OTrP "Agent" on the client side, and a "Trusted Application Manager (TAM)" on
 the server side) must themselves run inside a TEE. However, the transport for OTrP,
 along with typical networking stacks, need not run inside a TEE.  This split allows
-keeping the set of highly trusted code as small as possible, and allowing code
+the set of highly trusted code to be kept as small as possible, including allowing code
 (e.g., TCP/IP) that only sees encrypted messages to be kept out of the TEE.
 
 The OTrP specification {{!I-D.ietf-teep-opentrustprotocol}} describes the
@@ -109,11 +109,11 @@ with content SHOULD have the following headers as explained in Section 4.12 of
 {{I-D.ietf-httpbis-bcp56bis}}:
 
 ~~~~
-Content-Type: application/otrp+json
-X-Content-Type-Options: nosniff
-Content-Security-Policy: default-src 'none'
-Cache-Control: max-age=3600
-Referrer-Policy: no-referrer
+    Content-Type: application/otrp+json
+    X-Content-Type-Options: nosniff
+    Content-Security-Policy: default-src 'none'
+    Cache-Control: max-age=3600
+    Referrer-Policy: no-referrer
 ~~~~
 
 # Client Broker Behavior
@@ -126,7 +126,7 @@ being available in a given type of TEE, the notification will contain the follow
 
  - A unique identifier of the TA
 
- - Optionally, any metadata to pass to the Agent.  This might
+ - Optionally, any metadata to pass to the OTrP Agent.  This might
    include a TAM URI provided in the application manifest, for example.
 
  - Optionally, any requirements that may affect the choice of TEE,
@@ -195,7 +195,7 @@ If no data is passed back, the Broker's task is complete, and it
 can delete its session state, and inform its client (e.g., the application
 installer) of success.
 
-If instead the OTrP Agent passes a message buffer, the TEEP Broker
+If instead the OTrP Agent passes back a message buffer, the TEEP Broker
 handles the message buffer as specified in {{send-msg}}.
 
 ## Handling checks for policy changes
@@ -203,15 +203,15 @@ handles the message buffer as specified in {{send-msg}}.
 An implementation MUST provide a way to periodically check for OTrP policy changes.
 This can be done in any implementation-specific manner, such as:
 
-A) The Broker might call into the Agent at an interval previously specified by the Agent.
+A) The Broker might call into the OTrP Agent at an interval previously specified by the OTrP Agent.
    This approach requires that the Broker be capable of running a periodic timer.
 
-B) The Broker might be informed when an existing TA is invoked, and call into the Agent if
-   more time has passed than was previously specified by the Agent.  This approach allows
+B) The Broker might be informed when an existing TA is invoked, and call into the OTrP Agent if
+   more time has passed than was previously specified by the OTrP Agent.  This approach allows
    the device to go to sleep for a potentially long period of time.
 
 C) The Broker might be informed when any attestation attempt determines that the device
-   is out of compliance, and call into the Agent to remediate.
+   is out of compliance, and call into the OTrP Agent to remediate.
 
 The Broker informs the OTrP Agent by invoking an appropriate "RequestPolicyCheck" API.
 The OTrP Agent will either (a) pass no data back, (b) pass back a TAM URI to connect to,
@@ -221,13 +221,13 @@ as specified in {{client-start}}.
 ## Error handling
 
 If any local error occurs where the Broker cannot get
-a message buffer (empty or not) back from the Agent, the
+a message buffer (empty or not) back from the OTrP Agent, the
 Broker deletes its session state, and informs its client (e.g.,
 the application installer) of a failure.
 
 If any HTTP request results in an HTTP error response or
 a lower layer error (e.g., network unreachable), the
-Broker calls the Agent's "ProcessError" API, and then
+Broker calls the OTrP Agent's "ProcessError" API, and then
 deletes its session state and informs its client of a failure.
 
 # Server Broker Behavior
@@ -269,7 +269,7 @@ Broker generates an appropriate HTTP error response.
    picks an OTrP Agent (e.g., the only one available) based on
    this notification.
 
-2. The Client Broker calls the Agent's "RequestTA" API, passing
+2. The Client Broker calls the OTrP Agent's "RequestTA" API, passing
    TA Needed = X.
 
 3. The OTrP Agent finds that no such TA is already installed,
@@ -292,9 +292,9 @@ Broker generates an appropriate HTTP error response.
    in the body.
 
 8. The Client Broker gets the HTTP response, extracts the OTrP
-   message and calls the Agent's "ProcessOTrPMessage" API to pass it the message.
+   message and calls the OTrP Agent's "ProcessOTrPMessage" API to pass it the message.
 
-9. The Agent processes the OTrP message, and generates an OTrP
+9. The OTrP Agent processes the OTrP message, and generates an OTrP
    response (e.g., GetDeviceStateResponse) which it passes back
    to the Client Broker.
 
@@ -316,11 +316,11 @@ Broker generates an appropriate HTTP error response.
 # Security Considerations {#security}
 
 Although OTrP is protected end-to-end inside of HTTP, there is still value
-in using HTTPS for transport, since HTTPS can provides stronger protections
+in using HTTPS for transport, since HTTPS can provides additional protections
 as discussed in Section 6 of {{I-D.ietf-httpbis-bcp56bis}}.  As such, Broker
 implementations MUST support HTTPS.  The choice of HTTP vs HTTPS at runtime
 is up to policy, where an administrator configures the TAM URI to be used,
-but it is expected that real deployments always use HTTPS.
+but it is expected that real deployments will always use HTTPS TAM URIs.
 
 # IANA Considerations
 
