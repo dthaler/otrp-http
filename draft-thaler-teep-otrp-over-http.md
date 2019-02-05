@@ -98,6 +98,7 @@ by returning 0 bytes.
 
 # Use of HTTP as a Transport
 
+This document uses HTTP {{!I-D.ietf-httpbis-semantics}} as a transport.
 When not called out explicitly in this document, all implementation recommendations
 in {{?I-D.ietf-httpbis-bcp56bis}} apply to use of HTTP by OTrP.  
 
@@ -110,11 +111,15 @@ with content SHOULD have the following headers as explained in Section 4.12 of
 
 ~~~~
     Content-Type: application/otrp+json
+    Cache-Control: no-store
     X-Content-Type-Options: nosniff
     Content-Security-Policy: default-src 'none'
-    Cache-Control: max-age=3600
     Referrer-Policy: no-referrer
 ~~~~
+
+Only GET and POST methods are specified for TAM resources exposed over HTTP.
+
+When HTTPS is used, TLS certificates MUST be checked according to {{!RFC2818}}.
 
 # Client Broker Behavior
 
@@ -274,12 +279,19 @@ Broker generates an appropriate HTTP error response.
 
 3. The OTrP Agent finds that no such TA is already installed,
    but that it can be obtained from a given TAM.  The OTrP
-   Agent passes the TAM URI to the Client Broker.  (If the OTrP
-   Agent already had a cached TAM certificate that it trusts,
-   it could skip to step 9 instead and generate a GetDeviceStateResponse.)
+   Agent passes the TAM URI (e.g., "https://example.com/tam")
+   to the Client Broker.  (If the OTrP Agent already had a cached TAM 
+   certificate that it trusts, it could skip to step 9 instead and 
+   generate a GetDeviceStateResponse.)
 
-4. The Client Broker sends an HTTP GET request to the TAM URI,
-   with an "Accept: application/otrp+json" header.
+4. The Client Broker sends an HTTP GET request to the TAM URI:
+
+~~~~
+        GET /tam HTTP/1.1
+        Host: example.com
+        Accept: application/otrp+json
+        User-Agent: Foo/1.0
+~~~~
 
 5. The Server Broker receives the HTTP GET request, and calls
    the TAM's "ProcessConnect" API.
@@ -287,9 +299,21 @@ Broker generates an appropriate HTTP error response.
 6. The TAM generates an OTrP message (typically GetDeviceStateRequest
    is the first message) and passes it to the Server Broker.
 
-7. The Server Broker sends an HTTP 200 OK response with a
-   "Content-type: application/otrp+json" header, and the OTrP message
-   in the body.
+7. The Server Broker sends an HTTP successful response with 
+   the OTrP message in the body:
+
+~~~~
+        HTTP/1.1 200 OK
+        Content-Type: application/otrp+json
+        Content-Length: [length of OTrP message here]
+        Server: Bar/2.2
+        Cache-Control: no-store
+        X-Content-Type-Options: nosniff
+        Content-Security-Policy: default-src 'none'
+        Referrer-Policy: no-referrer
+
+        [OTrP message here]
+~~~~
 
 8. The Client Broker gets the HTTP response, extracts the OTrP
    message and calls the OTrP Agent's "ProcessOTrPMessage" API to pass it the message.
@@ -299,8 +323,18 @@ Broker generates an appropriate HTTP error response.
    to the Client Broker.
 
 10. The Client Broker gets the OTrP message buffer and sends
-    an HTTP POST request to the TAM URI, with
-    "Content-type: application/otrp+json" and "Accept: application/otrp+json".
+    an HTTP POST request to the TAM URI, with the OTrP message in the body:
+
+~~~~
+        POST /tam HTTP/1.1
+        Host: example.com
+        Accept: application/otrp+json
+        Content-Type: application/otrp+json
+        Content-Length: [length of OTrP message here]
+        User-Agent: Foo/1.0
+
+        [OTrP message here]
+~~~~
 
 11. The Server Broker receives the HTTP POST request, and calls
     the TAM's "ProcessOTrPMessage" API.
@@ -308,8 +342,13 @@ Broker generates an appropriate HTTP error response.
 12. Steps 6-11 are then repeated until the TAM passes no data back
     to the Server Broker in step 6.
 
-13. The Server Broker sends an HTTP 200 OK response with
-    no body.
+13. The Server Broker sends an HTTP successful response with
+    no body:
+
+~~~~
+        HTTP/1.1 204 No Content
+        Server: Bar/2.2
+~~~~
 
 14. The Client Broker deletes its session state.
 
@@ -324,7 +363,11 @@ but it is expected that real deployments will always use HTTPS TAM URIs.
 
 # IANA Considerations
 
-This document requests that IANA assign the "application/otrp+json" media type.
+[^NOTE]
+
+[^NOTE]: This section should probably be moved to the OTrP spec.
+
+This section requests that IANA assign the "application/otrp+json" media type.
 
 Type name: application
 
@@ -335,14 +378,14 @@ Required parameters: none
 Optional parameters: none
 
 Encoding considerations: Same as encoding considerations of
-application/json as specified in Section 11 of {{!RFC7159}}.
+application/json as specified in Section 11 of {{?RFC7159}}.
 
-Security considerations: See Section 12 of {{RFC7159}} and {{security}} of this document.
+Security considerations: See Section 12 of {{?RFC7159}} and {{security}} of this document.
 
 Interoperability considerations: Same as interoperability
-considerations of application/json as specified in {{RFC7159}}.
+considerations of application/json as specified in {{?RFC7159}}.
 
-Published specification: This specification.
+Published specification: {{!I-D.ietf-teep-opentrustprotocol}}
 
 Applications that use this media type: OTrP implementations.
 
