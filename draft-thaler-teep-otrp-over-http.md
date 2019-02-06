@@ -102,7 +102,8 @@ This document uses HTTP {{!I-D.ietf-httpbis-semantics}} as a transport.
 When not called out explicitly in this document, all implementation recommendations
 in {{?I-D.ietf-httpbis-bcp56bis}} apply to use of HTTP by OTrP.  
 
-Redirects MAY be automatically followed, and no request headers need be modified or
+Redirects MAY be automatically followed, and no additional request headers 
+beyond those specified by HTTP need be modified or
 removed upon a following such a redirect.
 
 Content is not intended to be treated as active by browsers and so HTTP responses
@@ -117,7 +118,10 @@ with content SHOULD have the following headers as explained in Section 4.12 of
     Referrer-Policy: no-referrer
 ~~~~
 
-Only GET and POST methods are specified for TAM resources exposed over HTTP.
+Only the POST method is specified for TAM resources exposed over HTTP.
+A URI of such a resource is referred to as the "TAM URI".  OTrP can
+can use any HTTP(S) URI.  The URI to use is configured in an OTrP Agent
+via an out-of-band mechanism, as discussed in the next section.
 
 When HTTPS is used, TLS certificates MUST be checked according to {{!RFC2818}}.
 
@@ -158,8 +162,8 @@ application installer) of success.
 
 If the OTrP Agent passes back a TAM URI with no message buffer, the TEEP Broker
 attempts to create session state,
-then sends an HTTP(S) GET to the TAM URI with an "Accept: application/otrp+json" header
- and an empty body. The HTTP request is then associated with the Broker's session state.
+then sends an HTTP(S) POST to the TAM URI with an "Accept: application/otrp+json" header
+and an empty body. The HTTP request is then associated with the Broker's session state.
 
 If the OTrP Agent instead passes back a TAM URI with a message buffer, the TEEP Broker
 attempts to create session state and handles the message buffer as
@@ -237,15 +241,13 @@ deletes its session state and informs its client of a failure.
 
 # Server Broker Behavior
 
-## Receiving an HTTP GET request
-
-When an HTTP GET request is received, the Broker invokes the
-TAM's "ProcessConnect" API.  The TAM will then pass back
-a (possibly empty) message buffer.
-
 ## Receiving an HTTP POST request
 
-When an HTTP POST request is received, the Broker calls the TAM's
+When an HTTP POST request is received with an empty body,
+the Broker invokes the TAM's "ProcessConnect" API.  The TAM will then
+pass back a (possibly empty) message buffer.
+
+When an HTTP POST request is received with a non-empty body, the Broker calls the TAM's
 "ProcessOTrPMessage" API to pass it the request body. The TAM will 
 then pass back a (possibly empty) message buffer.
 
@@ -284,16 +286,17 @@ Broker generates an appropriate HTTP error response.
    certificate that it trusts, it could skip to step 9 instead and 
    generate a GetDeviceStateResponse.)
 
-4. The Client Broker sends an HTTP GET request to the TAM URI:
+4. The Client Broker sends an HTTP POST request to the TAM URI:
 
 ~~~~
-        GET /tam HTTP/1.1
+        POST /tam HTTP/1.1
         Host: example.com
         Accept: application/otrp+json
+        Content-Length: 0
         User-Agent: Foo/1.0
 ~~~~
 
-5. The Server Broker receives the HTTP GET request, and calls
+5. The Server Broker receives the HTTP POST request, and calls
    the TAM's "ProcessConnect" API.
 
 6. The TAM generates an OTrP message (typically GetDeviceStateRequest
