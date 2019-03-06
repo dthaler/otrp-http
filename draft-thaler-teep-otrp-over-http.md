@@ -1,7 +1,7 @@
 ---
 title: HTTP Transport for the Open Trust Protocol (OTrP)
 abbrev: OTrP HTTP Transport
-docname: draft-thaler-teep-otrp-over-http-00
+docname: draft-thaler-teep-otrp-over-http-01
 category: info
 
 ipr: trust200902
@@ -119,8 +119,8 @@ with content SHOULD have the following headers as explained in Section 4.12 of
 ~~~~
 
 Only the POST method is specified for TAM resources exposed over HTTP.
-A URI of such a resource is referred to as the "TAM URI".  OTrP can
-can use any HTTP(S) URI.  The URI to use is configured in an OTrP Agent
+A URI of such a resource is referred to as a "TAM URI".  A TAM URI can
+be any HTTP(S) URI.  The URI to use is configured in an OTrP Agent
 via an out-of-band mechanism, as discussed in the next section.
 
 When HTTPS is used, TLS certificates MUST be checked according to {{!RFC2818}}.
@@ -147,13 +147,16 @@ based on the constraints expressed.  If there is only one TEE, the choice
 is obvious.  Otherwise, the choice might be based on factors such as
 capabilities of available TEE(s) compared with TEE requirements in the notification.
 
-The Broker MUST then inform the OTrP Agent in that TEE by invoking
+The Broker then informs the OTrP Agent in that TEE by invoking
 an appropriate "RequestTA" API that identifies the TA needed and any other
 associated metadata.  The Broker need not know whether the TEE already has
 such a TA installed or whether it is up to date.
 
 The OTrP Agent will either (a) pass no data back, (b) pass back a TAM URI to connect to,
-or (c) pass back a message buffer and TAM URI to send it to.
+or (c) pass back a message buffer and TAM URI to send it to.  The TAM URI
+passed back may or may not be the same as the TAM URI, if any, provided by
+the broker, depending on the OTrP Agent's configuration.  If they differ,
+the Broker MUST use the TAM URI passed back.
 
 ### Session Creation {#client-start}
 
@@ -182,7 +185,7 @@ Broker MUST do the following, using the Broker's session state associated
 with its API call to the OTrP Agent.
 
 The Broker sends an HTTP POST request to the TAM URI with "Accept: application/otrp+json"
-and "Content-type: application/otrp+json" headers, and a body
+and "Content-Type: application/otrp+json" headers, and a body
 containing the OTrP message buffer provided by the OTrP Agent.
 The HTTP request is then associated with the Broker's session state.
 
@@ -259,7 +262,7 @@ If the TAM passes back an empty buffer, the Broker sends a successful
 ## Getting a message buffer from the TAM
 
 If the TAM passes back a non-empty buffer, the Broker
-generates a successful (2xx) response with a "Content-type: application/otrp+json"
+generates a successful (2xx) response with a "Content-Type: application/otrp+json"
 header, and with the message buffer as the body.
 
 ## Error handling
@@ -288,13 +291,11 @@ Broker generates an appropriate HTTP error response.
 
 4. The Client Broker sends an HTTP POST request to the TAM URI:
 
-~~~~
-        POST /tam HTTP/1.1
-        Host: example.com
-        Accept: application/otrp+json
-        Content-Length: 0
-        User-Agent: Foo/1.0
-~~~~
+               POST /tam HTTP/1.1
+               Host: example.com
+               Accept: application/otrp+json
+               Content-Length: 0
+               User-Agent: Foo/1.0
 
 5. The Server Broker receives the HTTP POST request, and calls
    the TAM's "ProcessConnect" API.
@@ -305,18 +306,16 @@ Broker generates an appropriate HTTP error response.
 7. The Server Broker sends an HTTP successful response with 
    the OTrP message in the body:
 
-~~~~
-        HTTP/1.1 200 OK
-        Content-Type: application/otrp+json
-        Content-Length: [length of OTrP message here]
-        Server: Bar/2.2
-        Cache-Control: no-store
-        X-Content-Type-Options: nosniff
-        Content-Security-Policy: default-src 'none'
-        Referrer-Policy: no-referrer
+               HTTP/1.1 200 OK
+               Content-Type: application/otrp+json
+               Content-Length: [length of OTrP message here]
+               Server: Bar/2.2
+               Cache-Control: no-store
+               X-Content-Type-Options: nosniff
+               Content-Security-Policy: default-src 'none'
+               Referrer-Policy: no-referrer
 
-        [OTrP message here]
-~~~~
+               [OTrP message here]
 
 8. The Client Broker gets the HTTP response, extracts the OTrP
    message and calls the OTrP Agent's "ProcessOTrPMessage" API to pass it the message.
@@ -328,16 +327,14 @@ Broker generates an appropriate HTTP error response.
 10. The Client Broker gets the OTrP message buffer and sends
     an HTTP POST request to the TAM URI, with the OTrP message in the body:
 
-~~~~
-        POST /tam HTTP/1.1
-        Host: example.com
-        Accept: application/otrp+json
-        Content-Type: application/otrp+json
-        Content-Length: [length of OTrP message here]
-        User-Agent: Foo/1.0
+               POST /tam HTTP/1.1
+               Host: example.com
+               Accept: application/otrp+json
+               Content-Type: application/otrp+json
+               Content-Length: [length of OTrP message here]
+               User-Agent: Foo/1.0
 
-        [OTrP message here]
-~~~~
+               [OTrP message here]
 
 11. The Server Broker receives the HTTP POST request, and calls
     the TAM's "ProcessOTrPMessage" API.
@@ -348,17 +345,15 @@ Broker generates an appropriate HTTP error response.
 13. The Server Broker sends an HTTP successful response with
     no body:
 
-~~~~
-        HTTP/1.1 204 No Content
-        Server: Bar/2.2
-~~~~
+               HTTP/1.1 204 No Content
+               Server: Bar/2.2
 
 14. The Client Broker deletes its session state.
 
 # Security Considerations {#security}
 
 Although OTrP is protected end-to-end inside of HTTP, there is still value
-in using HTTPS for transport, since HTTPS can provides additional protections
+in using HTTPS for transport, since HTTPS can provide additional protections
 as discussed in Section 6 of {{I-D.ietf-httpbis-bcp56bis}}.  As such, Broker
 implementations MUST support HTTPS.  The choice of HTTP vs HTTPS at runtime
 is up to policy, where an administrator configures the TAM URI to be used,
